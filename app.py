@@ -6,15 +6,22 @@ app = Flask(__name__)
 #  會使用到session，故為必設。
 app.secret_key = 'Your Key'
 login_manager = LoginManager(app)
-#  login\_manager.init\_app(app)也可以
-#  假裝是我們的使用者
 users = {'foo@bar.tld': {'password': 'secret'}}
 
 
 class User(UserMixin):
     """
- 設置一： 只是假裝一下，所以單純的繼承一下而以 如果我們希望可以做更多判斷，
- 如is_administrator也可以從這邊來加入
+ 繼承UserMixin
+ UserMixin幫我們記錄了四個用戶狀態：
+
+is_authenticated
+    登入成功時return True(這時候才能過的了login_required)
+is_active
+    帳號啟用並且登入成功的時候return True
+is_anonymous
+    匿名用戶return True(登入用戶會return False)
+get_id()
+    取得當前用戶id
  """
 
     pass
@@ -23,8 +30,10 @@ class User(UserMixin):
 @login_manager.user_loader
 def user_loader(email):
     """
- 設置二： 透過這邊的設置讓flask_login可以隨時取到目前的使用者id
- :param email:官網此例將email當id使用，賦值給予user.id
+  This sets the callback for reloading a user from the session. The
+function you set should take a user ID (a ``unicode``) and return a
+user object, or ``None`` if the user does not exist.
+ :param email:此例將email當id使用，賦值給予user.id
  """
     if email not in users:
         return
@@ -36,9 +45,7 @@ def user_loader(email):
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    """
- 官網git很給力的寫了一個login的頁面，在GET的時候回傳渲染
- """
+
     if request.method == 'GET':
         return '''
      <form action='login' method='POST'>
